@@ -1,45 +1,22 @@
 import { BaseDirectory, exists, writeFile, mkdir } from "@tauri-apps/plugin-fs";
-import { createGlobalState } from "@vueuse/core";
 import { invoke } from "@tauri-apps/api/core"
-import { ref } from "vue";
-import { compareVersion } from "../utils/version";
-
-interface PackageInfo {
-    serial: string;
-    versions: {
-        version: string;
-        file: string;
-    }[]; // 修改类型定义，允许 versions 数组包含多个元素
-}
-
-interface FubeMXInfo {
-    version: number;
-}
-
-interface ResponseData {
-    FubeMX: FubeMXInfo
-    packages: PackageInfo[];
-}
+import PackageManager from "./PackageManager";
 
 const OnlineInfo = createGlobalState(() => {
-    const FubeMX = ref<FubeMXInfo>();
-    const packages = ref<PackageInfo[]>([]);
+    const FubeMX = ref<FubeMXInfo_Online>();
+    const packageManager = PackageManager()
 
     async function fetchInfo() {
         try {
-            const res = await fetch('https://pan.baud-dance.com/d/FubeMX/packages.json', { headers: { "Cache-Control": "no-cache" } });
+            const res = await fetch('https://pan.baud-dance.com/d/FubeMX/info.json', { headers: { "Cache-Control": "no-cache" } });
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
-            const data: ResponseData = await res.json();
+            const data: OnlineInfo = await res.json();
             console.log(data)
             // 更新 version 和 packages 的值
             FubeMX.value = data.FubeMX;
-            packages.value = data.packages;
-            packages.value.forEach((item) => {
-                item.versions.sort((a, b) => compareVersion(b.version, a.version))
-            })
-            console.log('Online info fetched successfully', packages.value);
+            packageManager.setOnlinePackages(data.packages)
         } catch (error) {
             console.error('Failed to fetch online info:', error);
         }
@@ -103,7 +80,7 @@ const OnlineInfo = createGlobalState(() => {
         console.log('解压完成');
     }
 
-    return { FubeMX, packages, fetchInfo, downloadPackage, unzipFile }
+    return { FubeMX, fetchInfo }
 })
 
 export default OnlineInfo;

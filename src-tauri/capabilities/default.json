@@ -23,7 +23,11 @@
     "fs:allow-remove",
     {
       "identifier": "fs:scope",
-      "allow": ["home"]
-    }
+      "allow": [
+        "home"
+      ]
+    },
+    "dialog:default",
+    "dialog:default"
   ]
 }

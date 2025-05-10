@@ -2,46 +2,38 @@
 import NButton from 'naive-ui/es/button/src/Button'
 import ThemeConfig from '../states/ThemeConfig';
 import OnlineInfo from '../states/OnlineInfo';
+import PackageManager from '../states/PackageManager';
+import { NTag } from 'naive-ui';
+import PackageActions from './PackageActions.vue';
 const themeConfig = ThemeConfig();
 const onlineInfo = OnlineInfo();
+const packageManager = PackageManager();
 
 function downloadPackage(file: string) {
     console.log(file);
-   onlineInfo.downloadPackage(file); 
+    onlineInfo.downloadPackage(file);
 }
 
 const columns = [
     { title: '芯片系列', key: 'serial' },
-    { title: '最新版本', key: 'version' },
+    { title: '最新版本', key: 'newVersion.version' },
     {
         title: '操作', key: 'actions',
-        render: (row: any) => {
-            return h(
-                NButton,
-                {
-                    strong: true,
-                    tertiary: true,
-                    size: 'small',
-                    onClick: () => downloadPackage(row.file) 
-                },
-                { default: () => '安装' }
-            )
-        }
+        render: (row: any) => h(PackageActions, { version: row.newVersion })
     },
 ]
 
 const data = computed(() => {
-    if (onlineInfo.packages.value.length === 0) {
+    if (packageManager.packages.value.length === 0) {
         return [];
     }
-    return onlineInfo.packages.value.map((item) => {
+    return packageManager.packages.value.map((item) => {
         return {
             serial: item.serial,
-            version: item.versions.length > 0 ? item.versions[0].version : '暂无',
-            file: item.versions.length > 0? item.versions[0].file : ''
+            newVersion: item.newVersion,
         }
     })
-}) 
+})
 
 
 
