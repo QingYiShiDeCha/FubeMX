@@ -83,7 +83,7 @@ const ThemeConfig = createGlobalState(() => {
     const tabbarHeight = ref(80);
     const backgroundColor = ref('#F2F2F2');
 
-    const { width, height } = useWindowSize()
+    const { height } = useWindowSize()
 
     const contentHeight = computed(() => {
         return height.value - toolbarHeight.value - footbarHeight.value - tabbarHeight.value

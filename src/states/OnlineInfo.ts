@@ -1,7 +1,8 @@
-import { BaseDirectory, writeFile } from "@tauri-apps/plugin-fs";
+import { BaseDirectory, exists, writeFile, mkdir } from "@tauri-apps/plugin-fs";
 import { createGlobalState } from "@vueuse/core";
 import { invoke } from "@tauri-apps/api/core"
 import { ref } from "vue";
+import { compareVersion } from "../utils/version";
 
 interface PackageInfo {
     serial: string;
@@ -20,13 +21,13 @@ interface ResponseData {
     packages: PackageInfo[];
 }
 
-export const OnlineInfo = createGlobalState(() => {
+const OnlineInfo = createGlobalState(() => {
     const FubeMX = ref<FubeMXInfo>();
     const packages = ref<PackageInfo[]>([]);
 
     async function fetchInfo() {
         try {
-            const res = await fetch('https://pan.baud-dance.com/d/FubeMX/packages.json');
+            const res = await fetch('https://pan.baud-dance.com/d/FubeMX/packages.json', { headers: { "Cache-Control": "no-cache" } });
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
@@ -35,13 +36,18 @@ export const OnlineInfo = createGlobalState(() => {
             // 更新 version 和 packages 的值
             FubeMX.value = data.FubeMX;
             packages.value = data.packages;
+            packages.value.forEach((item) => {
+                item.versions.sort((a, b) => compareVersion(b.version, a.version))
+            })
+            console.log('Online info fetched successfully', packages.value);
         } catch (error) {
             console.error('Failed to fetch online info:', error);
         }
     }
 
-    async function downloadPackage() {
-        const response = await fetch("https://pan.baud-dance.com/d/FubeMX/STM32Cube_FW_F1_V1.8.6.zip");
+    async function downloadPackage(packageName: string) {
+        console.log(`https://pan.baud-dance.com/d/FubeMX/${packageName}.zip`)
+        const response = await fetch(`https://pan.baud-dance.com/d/FubeMX/${packageName}.zip`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -79,19 +85,25 @@ export const OnlineInfo = createGlobalState(() => {
             chunksAll.set(chunk, offset);
             offset += chunk.length;
         }
-        console.log("Total bytes to allocate:", loadedBytes);
-        const filePath = "233_STM32Cube_FW_F1_V1.8.6.zip";
-        console.log("Chunks count:", chunks.length);
+
+        const dirExists = await exists("FubeMX", { baseDir: BaseDirectory.Home });
+        if (!dirExists) {
+            await mkdir("FubeMX", { baseDir: BaseDirectory.Home });
+        }
+        const filePath = "FubeMX/" + packageName + ".zip";
+
         await writeFile(filePath, chunksAll, { baseDir: BaseDirectory.Home })
 
         console.log('ZIP 文件已保存');
-        unzipFile();
+        unzipFile(`${packageName}.zip`);
     }
 
-    async function unzipFile() {
-        await invoke("unzip_file", { fileName: "233_STM32Cube_FW_F1_V1.8.6.zip" });
+    async function unzipFile(fileName: string) {
+        await invoke("unzip_file", { fileName });
         console.log('解压完成');
     }
 
     return { FubeMX, packages, fetchInfo, downloadPackage, unzipFile }
 })
+
+export default OnlineInfo;

@@ -1,13 +1,17 @@
 use std::env;
 use std::fs;
 use std::io;
+use std::path::PathBuf;
+use tokio::fs::create_dir_all;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 
 #[tauri::command]
 async fn unzip_file(file_name: String) {
-    println!("I was invoked from JavaScript!");
     let file_path = env::home_dir();
     if let Some(path) = file_path {
         let mut file_path = path.clone();
+        file_path.push("FubeMX");
         file_path.push(file_name);
         println!("{:?} 233", file_path);
         let file = fs::File::open(file_path).unwrap();
@@ -16,6 +20,11 @@ async fn unzip_file(file_name: String) {
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).unwrap();
             let mut outpath = path.clone();
+            outpath.push("STM32Cube");
+            outpath.push("Repository");
+            if !outpath.exists() {
+                create_dir_all(&outpath).await.unwrap();
+            }
             match file.enclosed_name() {
                 Some(p) => outpath.push(p),
                 None => continue,
