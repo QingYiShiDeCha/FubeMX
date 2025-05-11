@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import PackageManager from '../states/PackageManager';
-import OnlineInfo from '../states/OnlineInfo';
 import { NProgress, NSpin } from 'naive-ui';
 const props = defineProps<{ version: VersionInfo }>()
 const packageManager = PackageManager();
-const onlineInfo = OnlineInfo();
 
 
 const isInstalled = computed(() => {

@@ -1,7 +1,6 @@
 import { compareVersion } from "../utils/version";
-import { BaseDirectory, exists, writeFile, mkdir, remove } from "@tauri-apps/plugin-fs";
-import { invoke } from "@tauri-apps/api/core";
-import { c } from "naive-ui";
+import { Channel, invoke } from "@tauri-apps/api/core";
+import { downloadDir, homeDir } from "@tauri-apps/api/path";
 
 const PackageManager = createGlobalState(() => {
     const notification = useNotification();
@@ -36,93 +35,50 @@ const PackageManager = createGlobalState(() => {
      */
     async function startInstall(v: VersionInfo) {
         if (dealing.value) {
-            notification.error({ title: '下载错误', content: '正在安装其他固件包，带宽有限，请稍后再试' })
+            notification.error({ title: '下载错误', content: '正在安装其他固件包，带宽有限，请稍后再试', duration: 2500 })
             return;
         }
         dealing.value = { state: 'downloading', version: v, downloadProgress: 0, installProgress: 0 }
         await downloadPackage(v)
         if (dealing.value.state === 'error') {
-            notification.error({ title: '下载错误', content: dealing.value.error })
+            notification.error({ title: '下载错误', content: dealing.value.error, duration: 2500 })
             clearDealing();
             return;
         }
         dealing.value = { ...dealing.value!, state: 'installing' }
         try {
-            await invoke("unzip_file", { fileName: v.name + ".zip" });
+            const downloadPath = await downloadDir();
+            const repositoryPath = await homeDir() + "/STM32Cube/Repository";
+            await invoke("unzip_file", { fileName: v.name + ".zip", downloadPath, repositoryPath });
         } catch (error) {
             console.error('Failed to unzip file:', error);
             dealing.value = { ...dealing.value!, state: 'error', error: '解压错误' }
-            notification.error({ title: '安装错误', content: dealing.value.error })
+            notification.error({ title: '安装错误', content: dealing.value.error, duration: 2500 })
             clearDealing();
             return;
         }
         clearDealing();
         await refreshLocalPackages();
     }
-    /**
-     * 下载固件包 固件包压缩包会被下载到Home目录的FubeMX文件夹下
-     * @param v 固件包信息
-     */
-    async function downloadPackage(v: VersionInfo) {
-        const name = v.name;
-        // 1. 检查是否已有同名的压缩包，有则删除
-        if (await exists("FubeMX/" + name + ".zip", { baseDir: BaseDirectory.Home })) {
-            await remove("FubeMX/" + name + ".zip", { baseDir: BaseDirectory.Home })
-        }
-        // 2. 下载压缩包
-        const response = await fetch(`https://pan.baud-dance.com/d/FubeMX/${name}.zip`);
-        if (!response.ok) {
-            dealing.value = { ...dealing.value!, state: 'error', error: 'HTTP error! status: ' + response.status }
-            return;
-        }
-        const contentLength = response.headers.get('Content-Length');
-        if (!contentLength) {
-            dealing.value = { ...dealing.value!, state: 'error', error: 'Content-Length header is missing' }
-            return;
-        }
-        const totalBytes = parseInt(contentLength, 10);
-        let loadedBytes = 0;
-        let chunks: Uint8Array[] = [];
-        const reader = response.body?.getReader();
-        if (!reader) {
-            dealing.value = { ...dealing.value!, state: 'error', error: 'Body reader is missing' }
-            return;
-        }
-        async function read(): Promise<void> {
-            if (!reader) {
-                dealing.value = { ...dealing.value!, state: 'error', error: 'Body reader is missing' }
-                return;
+
+    const downloadPackage = (v: VersionInfo) => new Promise<void>(async (resolve, _) => {
+        const name = v.name + ".zip";
+        const downloadPath = await downloadDir() + "/" + name;
+        const url = `https://pan.baud-dance.com/d/FubeMX/${name}`
+        const onEvent = new Channel<DownloadEvent>();
+        let total = 0;
+        onEvent.onmessage = (event) => {
+            if (event.event == 'started') {
+                total = event.data.contentLength;
+            } else if (event.event == 'progress') {
+                dealing.value!.downloadProgress = Math.round(100 * event.data.chunkLength / total);
+            } else if (event.event == 'finished') {
+                resolve();
             }
-            const { done, value } = await reader.read();
-            if (done) {
-                return;
-            }
-            if (value) {
-                chunks.push(value);
-                loadedBytes += value.length;
-                dealing.value = { ...dealing.value!, downloadProgress: Math.round(loadedBytes / totalBytes * 100)   }
-            }
-            return await read();
-
         }
-        await read();
-        let chunksAll = new Uint8Array(loadedBytes);
-        let offset = 0;
-        for (let chunk of chunks) {
-            chunksAll.set(chunk, offset);
-            offset += chunk.length;
-        }
+        await invoke('download_file', { url, savePath: downloadPath, onEvent: onEvent })
+    })
 
-        // 3. 写入压缩包到本地
-        const dirExists = await exists("FubeMX", { baseDir: BaseDirectory.Home });
-        if (!dirExists) {
-            await mkdir("FubeMX", { baseDir: BaseDirectory.Home });
-        }
-        const filePath = "FubeMX/" + name + ".zip";
-
-        await writeFile(filePath, chunksAll, { baseDir: BaseDirectory.Home })
-
-    }
     /**
      * 清除正在处理的固件包信息
      */

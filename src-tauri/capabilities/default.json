@@ -14,20 +14,45 @@
     "core:window:allow-internal-toggle-maximize",
     "fs:default",
     "fs:allow-read",
+    "fs:allow-write",
+    "fs:allow-remove",
+    
     "fs:allow-home-read-recursive",
     "fs:allow-home-read",
     "fs:allow-home-meta",
     "fs:allow-home-meta-recursive",
     "fs:allow-home-write",
     "fs:allow-home-write-recursive",
-    "fs:allow-remove",
+
+    "fs:allow-download-meta",
+    "fs:allow-download-meta-recursive",
+    "fs:allow-download-read",
+    "fs:allow-download-read-recursive",
+    "fs:allow-download-write",
+    "fs:allow-download-write-recursive",
     {
       "identifier": "fs:scope",
       "allow": [
-        "home"
+        "$HOME",
+        "$DOWNLOADS"
       ]
     },
     "dialog:default",
-    "dialog:default"
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "opener:default",
+    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        {
+          "path": "$DOWNLOADS"
+        },
+        {
+          "path": "$DOWNLOADS/*"
+        }
+      ]
+    },
+    "fs:allow-open"
   ]
 }

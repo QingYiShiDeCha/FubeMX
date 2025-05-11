@@ -16,12 +16,14 @@ declare module 'vue' {
     NLoadingBarProvider: typeof import('naive-ui')['NLoadingBarProvider']
     NMessageProvider: typeof import('naive-ui')['NMessageProvider']
     NNotificationProvider: typeof import('naive-ui')['NNotificationProvider']
-    NSpin: typeof import('naive-ui')['NSpin']
+    NProgress: typeof import('naive-ui')['NProgress']
     NTabPane: typeof import('naive-ui')['NTabPane']
     NTabs: typeof import('naive-ui')['NTabs']
     NTag: typeof import('naive-ui')['NTag']
     PackageActions: typeof import('./src/components/PackageActions.vue')['default']
     PackagesTable: typeof import('./src/components/PackagesTable.vue')['default']
+    SoftwaresActions: typeof import('./src/components/SoftwaresActions.vue')['default']
+    SoftwaresTable: typeof import('./src/components/SoftwaresTable.vue')['default']
     Toolbar: typeof import('./src/components/Toolbar.vue')['default']
   }
 }
