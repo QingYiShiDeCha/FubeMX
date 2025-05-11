@@ -9,7 +9,7 @@ interface PackageInfo_Online {
 }
 
 interface FubeMXInfo_Online {
-    version: number;
+    version: string;
 }
 
 interface SoftwareInfo {

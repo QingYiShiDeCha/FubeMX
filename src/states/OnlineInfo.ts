@@ -1,8 +1,12 @@
 import PackageManager from "./PackageManager";
 import SoftwaresManager from "./SoftwaresManager";
+import { compareVersion } from "../utils/version"
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 const OnlineInfo = createGlobalState(() => {
     const notification = useNotification();
+    const dialog = useDialog();
+    const currentVersion = "0.0.1";
     const FubeMX = ref<FubeMXInfo_Online>();
     const packageManager = PackageManager()
     const softwareManager = SoftwaresManager()
@@ -19,7 +23,16 @@ const OnlineInfo = createGlobalState(() => {
             FubeMX.value = data.FubeMX;
             packageManager.setOnlinePackages(data.packages)
             softwareManager.setOnlineSoftwares(data.softwares)
-            notification.success({ title: '更新成功', content: '列表数据已更新',duration: 2500})
+            notification.success({ title: '更新成功', content: '列表数据已更新', duration: 2500 })
+
+            if (compareVersion(currentVersion, FubeMX.value.version) < 0) {
+                dialog.info({
+                    title: '有新版本',
+                    content: '当前版本为 V' + currentVersion + '，最新版本为 V' + FubeMX.value.version + '，是否更新？',
+                    positiveText: '获取最新版本', negativeText: '取消',
+                    onPositiveClick: () => { openUrl("https://fubemx.keysking.com") }
+                })
+            }
         } catch (error) {
             console.error('Failed to fetch online info:', error);
         }
