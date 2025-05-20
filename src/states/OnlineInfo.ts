@@ -6,7 +6,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 const OnlineInfo = createGlobalState(() => {
     const notification = useNotification();
     const dialog = useDialog();
-    const currentVersion = "0.0.1";
+    const currentVersion = "0.1.0";
     const FubeMX = ref<FubeMXInfo_Online>();
     const packageManager = PackageManager()
     const softwareManager = SoftwaresManager()
