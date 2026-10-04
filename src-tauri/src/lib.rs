@@ -1,12 +1,10 @@
 use futures_util::StreamExt;
-use reqwest;
 use serde::Serialize;
 use std::env;
 use std::fs;
 use std::io;
-use tauri::{ipc::Channel, AppHandle};
+use tauri::ipc::Channel;
 use tokio::fs::create_dir_all;
-use zip::ZipArchive;
 
 #[tauri::command]
 async fn unzip_file(file_name: String, download_path: String, repository_path: String) {
