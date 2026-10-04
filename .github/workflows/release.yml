@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（不带 v 前缀），例如 0.1.1'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: ${{ matrix.name }}
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            name: 'macOS (Apple Silicon)'
+            args: '--target aarch64-apple-darwin'
+          - platform: 'macos-latest'
+            name: 'macOS (Intel)'
+            args: '--target x86_64-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            name: 'Linux'
+            args: ''
+          - platform: 'windows-latest'
+            name: 'Windows'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    env:
+      # 无 Apple 证书时使用 ad-hoc 签名，避免 Apple Silicon 打开时提示「文件已损坏」
+      APPLE_SIGNING_IDENTITY: '-'
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 安装 Linux 构建依赖
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ startsWith(matrix.platform, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - run: pnpm install --frozen-lockfile
+
+      # 构建产物里的版本号直接来自 tag，因此必须先于 tauri build 写入三处配置
+      - name: 同步版本号
+        shell: bash
+        env:
+          RAW_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${RAW_VERSION}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::版本号格式不合法：$VERSION"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          VERSION="$VERSION" node -e '
+            const fs = require("fs");
+            const v = process.env.VERSION;
+            const edit = (p, fn) => {
+              const j = JSON.parse(fs.readFileSync(p, "utf8"));
+              fn(j);
+              fs.writeFileSync(p, JSON.stringify(j, null, 2) + "\n");
+            };
+            edit("package.json", (j) => { j.version = v; });
+            edit("src-tauri/tauri.conf.json", (j) => { j.version = v; });
+            const cargo = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
+            fs.writeFileSync(
+              "src-tauri/Cargo.toml",
+              cargo.replace(/^version = ".*"$/m, `version = "${v}"`)
+            );
+          '
+          echo "已同步版本号 $VERSION"
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: __VERSION__
+          releaseName: 'FubeMX v__VERSION__'
+          releaseBody: |
+            下载对应平台的安装包：
+
+            - Windows：`.msi` 或 `.exe`
+            - macOS：`.dmg`
+            - Linux：`.deb` 或 `.AppImage`
+
+            macOS 包使用 ad-hoc 签名，首次打开需在「系统设置 → 隐私与安全性」中允许。
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
