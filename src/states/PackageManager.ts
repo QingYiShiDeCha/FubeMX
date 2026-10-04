@@ -1,9 +1,9 @@
+import { toast } from "vue-sonner";
 import { compareVersion } from "../utils/version";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { downloadDir, homeDir } from "@tauri-apps/api/path";
 
 const PackageManager = createGlobalState(() => {
-    const notification = useNotification();
     // packages列表, 来自线上
     const onLinePackages = ref<PackageInfo_Online[]>([]);
 
@@ -35,13 +35,13 @@ const PackageManager = createGlobalState(() => {
      */
     async function startInstall(v: VersionInfo) {
         if (dealing.value) {
-            notification.error({ title: '下载错误', content: '正在安装其他固件包，带宽有限，请稍后再试', duration: 2500 })
+            toast.error('正在安装其他固件包，带宽有限，请稍后再试')
             return;
         }
         dealing.value = { state: 'downloading', version: v, downloadProgress: 0, installProgress: 0 }
         await downloadPackage(v)
         if (dealing.value.state === 'error') {
-            notification.error({ title: '下载错误', content: dealing.value.error, duration: 2500 })
+            toast.error(dealing.value.error ?? '下载失败')
             clearDealing();
             return;
         }
@@ -53,7 +53,7 @@ const PackageManager = createGlobalState(() => {
         } catch (error) {
             console.error('Failed to unzip file:', error);
             dealing.value = { ...dealing.value!, state: 'error', error: '解压错误' }
-            notification.error({ title: '安装错误', content: dealing.value.error, duration: 2500 })
+            toast.error(dealing.value.error ?? '安装失败')
             clearDealing();
             return;
         }

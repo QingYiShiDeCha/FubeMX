@@ -1,17 +1,18 @@
 <script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
 import PackageManager from '../states/PackageManager';
-import { NProgress, NSpin } from 'naive-ui';
+
 const props = defineProps<{ version: VersionInfo }>()
 const packageManager = PackageManager();
 
+const isInstalled = computed(() => props.version.installed);
 
-const isInstalled = computed(() => {
-    return props.version.installed;
-})
+const isDealing = computed(() => packageManager.dealing.value?.version.name === props.version.name);
 
-const isDealing = computed(() => {
-    return packageManager.dealing.value?.version.name === props.version.name;
-})
+const dealing = computed(() => packageManager.dealing.value);
 
 function downloadPackage() {
     packageManager.startInstall(props.version);
@@ -19,21 +20,20 @@ function downloadPackage() {
 </script>
 
 <template>
-    <div flex>
-        <NTag type="success" v-if="isInstalled">已安装</NTag>
-        <div v-else-if="isDealing">
-            <div v-if="packageManager.dealing.value?.state == 'downloading'" flex>
-                <span mr-1rem> 正在下载</span>
-                <div w-10rem>
-                    <NProgress type="line" :percentage="packageManager.dealing.value.downloadProgress"
-                        indicator-placement="inside" />
-                </div>
-            </div>
-            <div v-else-if="packageManager.dealing.value?.state == 'installing'" flex>
-                <span mr-1rem>正在安装 </span>
-                <NSpin size="small" />
-            </div>
+    <Badge v-if="isInstalled" variant="outline"
+        class="border-emerald-500/40 text-emerald-600 dark:text-emerald-400">已安装</Badge>
+
+    <div v-else-if="isDealing" class="flex items-center gap-2">
+        <template v-if="dealing?.state === 'downloading'">
+            <span class="text-xs text-muted-foreground shrink-0">正在下载</span>
+            <Progress :model-value="dealing.downloadProgress" class="w-36" />
+            <span class="text-xs text-muted-foreground tabular-nums w-9 text-right">{{ dealing.downloadProgress }}%</span>
+        </template>
+        <div v-else-if="dealing?.state === 'installing'" class="flex items-center gap-2">
+            <span class="text-xs text-muted-foreground">正在安装</span>
+            <Spinner class="size-4" />
         </div>
-        <NButton v-else type="info" size="small" @click="downloadPackage">点击安装</NButton>
     </div>
+
+    <Button v-else variant="outline" size="sm" @click="downloadPackage">点击安装</Button>
 </template>

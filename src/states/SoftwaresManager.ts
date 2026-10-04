@@ -1,9 +1,9 @@
+import { toast } from "vue-sonner";
 import { downloadDir } from "@tauri-apps/api/path";
 import { invoke, Channel } from '@tauri-apps/api/core';
 
 
 const SoftwaresManager = createGlobalState(() => {
-    const notification = useNotification();
     const onlineSoftwares = ref<SoftwareInfo[]>([])
 
     const dealing = ref<DealingSoftware>();
@@ -21,7 +21,7 @@ const SoftwaresManager = createGlobalState(() => {
         const name = getSoftwareFileName(s.download.windows!)
         console.log(name)
         if (dealing.value) {
-            notification.error({ title: '下载错误', content: '正在安装其他软件，带宽有限，请稍后再试', duration: 2500 })
+            toast.error('正在安装其他软件，带宽有限，请稍后再试')
             return;
         }
         dealing.value = { state: 'downloading', software: s, downloadProgress: 0 }
@@ -36,7 +36,7 @@ const SoftwaresManager = createGlobalState(() => {
                 dealing.value!.downloadProgress = Math.round(100 * event.data.chunkLength / total);
             } else if (event.event == 'finished') {
                 clearDealing();
-                notification.success({ title: '下载成功', content: '软件已下载到' + downloadPath, duration: 2500 })
+                toast.success(`软件已下载到 ${downloadPath}`)
             }
         }
         await invoke('download_file', { url: s.download.windows!, savePath: downloadPath, onEvent: onEvent})

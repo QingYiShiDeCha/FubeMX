@@ -1,46 +1,48 @@
 <script setup lang="ts">
-import ThemeConfig from '../states/ThemeConfig';
-import SoftwaresManager from '../states/SoftwaresManager';
-import SoftwaresActions from './SoftwaresActions.vue';
 import { downloadDir } from '@tauri-apps/api/path';
 import { openPath } from '@tauri-apps/plugin-opener';
-const themeConfig = ThemeConfig();
-const softwaresManager = SoftwaresManager();
-const columns = [
-    { title: '软件名称', key: 'name', resizable: true, width: 200 },
-    { title: '功能介绍', key: 'description' },
-    {
-        title: '操作', key: 'actions',
-        width: 290,
-        render: (row: any) => h(
-            "div",
-            { class: "flex items-baseline gap-2" },
-            {
-                default: () => [
-                    h(SoftwaresActions, {
-                        s: row,
-                    }),
-                ]
-            }
-        )
-    },
-]
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import SoftwaresActions from './SoftwaresActions.vue';
+import SoftwaresManager from '../states/SoftwaresManager';
+import ThemeConfig from '../states/ThemeConfig';
 
-const data = computed(() => {
-    return softwaresManager.onlineSoftwares.value
-})
+const softwaresManager = SoftwaresManager();
+const themeConfig = ThemeConfig();
+
+const data = computed(() => softwaresManager.onlineSoftwares.value);
 
 const openDownloadFolder = async () => {
     const p = await downloadDir();
-    console.log('open download folder', p);
     await openPath(p);
 }
 </script>
 
 <template>
-    <div class="w-full h-full flex flex-col">
-        <n-data-table size="small" :columns="columns" :data="data" :bordered="false"
-            :max-height="themeConfig.contentHeight.value" />
-        <span mx-auto mt-5>安装包将下载到您的<a text-blue cursor-pointer @click="openDownloadFolder">下载文件夹</a>，请自行安装。</span>
+    <div class="w-full h-full flex flex-col gap-4">
+        <div class="overflow-y-auto" :style="{ maxHeight: themeConfig.contentHeight.value - 32 + 'px' }">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead class="w-52">软件名称</TableHead>
+                        <TableHead>功能介绍</TableHead>
+                        <TableHead class="w-80">操作</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <TableRow v-for="s in data" :key="s.name">
+                        <TableCell class="font-medium">{{ s.name }}</TableCell>
+                        <TableCell class="text-muted-foreground">{{ s.description }}</TableCell>
+                        <TableCell>
+                            <SoftwaresActions :s="s" />
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </div>
+        <p class="text-sm text-muted-foreground text-center shrink-0">
+            安装包将下载到您的
+            <button class="text-primary hover:underline" @click="openDownloadFolder">下载文件夹</button>
+            ，请自行安装。
+        </p>
     </div>
 </template>
