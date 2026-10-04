@@ -1,4 +1,4 @@
-import { createGlobalState, useDark, useWindowSize } from '@vueuse/core'
+import { createGlobalState, useDark } from '@vueuse/core'
 
 const ThemeConfig = createGlobalState(() => {
   const isDark = useDark({
@@ -14,14 +14,7 @@ const ThemeConfig = createGlobalState(() => {
     isDark.value = !isDark.value
   }
 
-  const toolbarHeight = 40
-  const tabbarHeight = 80
-
-  const { height } = useWindowSize()
-
-  const contentHeight = computed(() => height.value - toolbarHeight - tabbarHeight)
-
-  return { isDark, theme, toggleTheme, toolbarHeight, tabbarHeight, contentHeight }
+  return { isDark, theme, toggleTheme }
 })
 
 export default ThemeConfig

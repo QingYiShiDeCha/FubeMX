@@ -1,43 +1,45 @@
 <script setup lang="ts">
 import { RefreshCwIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import AppSidebar from './components/AppSidebar.vue'
+import AppToolbar from './components/AppToolbar.vue'
 import OnlineInfo from './states/OnlineInfo'
 import PackagesTable from './components/PackagesTable.vue'
+import SettingsPage from './components/SettingsPage.vue'
 import SoftwaresTable from './components/SoftwaresTable.vue'
-import Toolbar from './components/AppToolbar.vue'
 
 const onlineInfo = OnlineInfo()
-const activeTab = ref('software')
+const activePage = ref('softwares')
+
+const titles: Record<string, string> = {
+  softwares: '软件安装',
+  packages: '固件包管理',
+  settings: '设置',
+}
+const title = computed(() => titles[activePage.value] ?? '')
 
 onlineInfo.fetchInfo()
 </script>
 
 <template>
-  <div class="h-screen flex flex-col overflow-hidden bg-background text-foreground relative">
-    <Toolbar />
-    <Tabs v-model="activeTab" class="mx-4 mt-3 flex flex-1 min-h-0 flex-col gap-3">
-      <TabsList class="self-start">
-        <TabsTrigger value="software">软件安装</TabsTrigger>
-        <TabsTrigger value="packages">固件包管理</TabsTrigger>
-        <TabsTrigger value="settings">FubeMX设置</TabsTrigger>
-      </TabsList>
-      <TabsContent value="software" class="flex-1 min-h-0">
-        <SoftwaresTable />
-      </TabsContent>
-      <TabsContent value="packages" class="flex-1 min-h-0">
-        <PackagesTable />
-      </TabsContent>
-      <TabsContent value="settings" class="flex-1 min-h-0" />
-    </Tabs>
-    <Button
-      variant="secondary"
-      size="icon"
-      class="absolute right-4 bottom-4 rounded-full"
-      title="刷新列表"
-      @click="onlineInfo.fetchInfo()"
-    >
-      <RefreshCwIcon />
-    </Button>
+  <div class="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <AppToolbar />
+    <div class="flex min-h-0 flex-1">
+      <AppSidebar v-model="activePage" />
+      <main class="flex min-w-0 flex-1 flex-col">
+        <header class="flex shrink-0 items-center justify-between px-6 pt-5 pb-3">
+          <h1 class="text-base font-semibold">{{ title }}</h1>
+          <Button variant="outline" size="sm" class="gap-1.5" @click="onlineInfo.fetchInfo()">
+            <RefreshCwIcon />
+            刷新
+          </Button>
+        </header>
+        <div class="flex min-h-0 flex-1 flex-col px-6 pb-5">
+          <SoftwaresTable v-if="activePage === 'softwares'" />
+          <PackagesTable v-else-if="activePage === 'packages'" />
+          <SettingsPage v-else />
+        </div>
+      </main>
+    </div>
   </div>
 </template>
