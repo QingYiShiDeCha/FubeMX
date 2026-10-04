@@ -4,3 +4,4 @@ pnpm-lock.yaml
 auto-imports.d.ts
 components.d.ts
 src/components/ui/
+.playwright-cli/
