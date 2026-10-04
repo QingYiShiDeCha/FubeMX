@@ -24,16 +24,17 @@ function downloadPackage() {
     v-if="isInstalled"
     variant="outline"
     class="border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
-    >已安装</Badge
   >
+    已安装
+  </Badge>
 
   <div v-else-if="isDealing" class="flex items-center gap-2">
     <template v-if="dealing?.state === 'downloading'">
       <span class="text-xs text-muted-foreground shrink-0">正在下载</span>
       <Progress :model-value="dealing.downloadProgress" class="w-36" />
-      <span class="text-xs text-muted-foreground tabular-nums w-9 text-right"
-        >{{ dealing.downloadProgress }}%</span
-      >
+      <span class="text-xs text-muted-foreground tabular-nums w-9 text-right">
+        {{ dealing.downloadProgress }}%
+      </span>
     </template>
     <div v-else-if="dealing?.state === 'installing'" class="flex items-center gap-2">
       <span class="text-xs text-muted-foreground">正在安装</span>
