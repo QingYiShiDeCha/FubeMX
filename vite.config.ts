@@ -23,7 +23,7 @@ export default defineConfig({
         /\.md$/, // .md
       ],
       dts: true,
-      imports: ['vue', '@vueuse/core'],
+      imports: ['vue', 'vue-router', '@vueuse/core'],
     }),
   ],
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
