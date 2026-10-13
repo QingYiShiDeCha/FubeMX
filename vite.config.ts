@@ -8,6 +8,10 @@ import pkg from './package.json' with { type: 'json' }
 // https://vite.dev/config/
 export default defineConfig({
   clearScreen: false,
+  server: {
+    port: 1420,
+    strictPort: true,
+  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
