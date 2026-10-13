@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button'
 import AppSidebar from './components/AppSidebar.vue'
 import AppToolbar from './components/AppToolbar.vue'
 import OnlineInfo from './states/OnlineInfo'
+import Updater from './states/Updater'
 
 const route = useRoute()
 const onlineInfo = OnlineInfo()
+const updater = Updater()
 
 onlineInfo.fetchInfo()
+updater.checkForUpdate()
 </script>
 
 <template>
