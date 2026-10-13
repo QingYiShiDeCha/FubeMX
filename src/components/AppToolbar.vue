@@ -22,7 +22,7 @@ const themeConfig = ThemeConfig()
       <button
         class="w-11 flex items-center justify-center transition-colors hover:bg-accent hover:text-accent-foreground"
         title="切换主题"
-        @click="themeConfig.toggleTheme()"
+        @click="themeConfig.toggleTheme($event)"
       >
         <SunIcon v-if="themeConfig.isDark.value" class="size-4" />
         <MoonIcon v-else class="size-4" />

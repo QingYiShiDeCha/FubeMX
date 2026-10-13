@@ -30,7 +30,7 @@ const openDownloadFolder = async () => {
           </p>
         </div>
       </div>
-      <Button variant="outline" size="sm" class="gap-1.5" @click="themeConfig.toggleTheme()">
+      <Button variant="outline" size="sm" class="gap-1.5" @click="themeConfig.toggleTheme($event)">
         <SunIcon v-if="themeConfig.isDark.value" />
         <MoonIcon v-else />
         切换
