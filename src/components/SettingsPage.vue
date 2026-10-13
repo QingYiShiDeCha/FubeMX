@@ -2,6 +2,7 @@
 import { downloadDir } from '@tauri-apps/api/path'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { FolderOpenIcon, InfoIcon, MoonIcon, SunIcon } from '@lucide/vue'
+import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import ThemeConfig from '../states/ThemeConfig'
 
@@ -9,8 +10,11 @@ const themeConfig = ThemeConfig()
 const appVersion = __APP_VERSION__
 
 const openDownloadFolder = async () => {
-  const p = await downloadDir()
-  await openPath(p)
+  try {
+    await openPath(await downloadDir())
+  } catch (error) {
+    toast.error(`打开下载目录失败：${error}`)
+  }
 }
 </script>
 

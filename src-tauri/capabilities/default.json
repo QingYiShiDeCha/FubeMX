@@ -34,7 +34,7 @@
       "identifier": "fs:scope",
       "allow": [
         "$HOME",
-        "$DOWNLOADS"
+        "$DOWNLOAD"
       ]
     },
     "dialog:default",
@@ -46,10 +46,10 @@
       "identifier": "opener:allow-open-path",
       "allow": [
         {
-          "path": "$DOWNLOADS"
+          "path": "$DOWNLOAD"
         },
         {
-          "path": "$DOWNLOADS/*"
+          "path": "$DOWNLOAD/*"
         }
       ]
     },

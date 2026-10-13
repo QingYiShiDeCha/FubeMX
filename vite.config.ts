@@ -2,8 +2,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
-import { resolve, join } from 'node:path'
-import pkg from './package.json'
+import { resolve } from 'node:path'
+import pkg from './package.json' with { type: 'json' }
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -29,8 +29,8 @@ export default defineConfig({
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      '@assets': join(__dirname, 'src/assets'),
+      '@': resolve(import.meta.dirname, 'src'),
+      '@assets': resolve(import.meta.dirname, 'src/assets'),
     },
   },
 })

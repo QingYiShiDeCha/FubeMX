@@ -5,7 +5,9 @@ import { Toaster } from '@/components/ui/sonner'
 </script>
 
 <template>
-  <AppContent />
-  <Toaster position="bottom-right" />
-  <ConfirmDialog />
+  <div>
+    <AppContent />
+    <Toaster position="bottom-right" />
+    <ConfirmDialog />
+  </div>
 </template>

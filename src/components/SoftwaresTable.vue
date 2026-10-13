@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { downloadDir } from '@tauri-apps/api/path'
 import { openPath } from '@tauri-apps/plugin-opener'
+import { toast } from 'vue-sonner'
 import {
   Table,
   TableBody,
@@ -17,8 +18,11 @@ const softwaresManager = SoftwaresManager()
 const data = computed(() => softwaresManager.onlineSoftwares.value)
 
 const openDownloadFolder = async () => {
-  const p = await downloadDir()
-  await openPath(p)
+  try {
+    await openPath(await downloadDir())
+  } catch (error) {
+    toast.error(`打开下载目录失败：${error}`)
+  }
 }
 </script>
 
