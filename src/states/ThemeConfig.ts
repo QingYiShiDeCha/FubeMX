@@ -32,7 +32,7 @@ const ThemeConfig = createGlobalState(() => {
     const y = event?.clientY ?? 0
     const radius = Math.hypot(
       Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
+      Math.max(y, window.innerHeight - y)
     )
 
     const root = document.documentElement
