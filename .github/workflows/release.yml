@@ -108,6 +108,9 @@ jobs:
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 签名 updater 产物（.sig 与 latest.json），密钥本地位于 ~/.tauri/fubemx-updater/
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: __VERSION__
           releaseName: 'FubeMX v__VERSION__'
@@ -121,4 +124,6 @@ jobs:
             macOS 包使用 ad-hoc 签名，首次打开需在「系统设置 → 隐私与安全性」中允许。
           releaseDraft: true
           prerelease: false
+          # Windows 同时产出 msi 与 nsis 时，latest.json 优先使用 nsis 的 .exe
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}

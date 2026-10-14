@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { downloadDir } from '@tauri-apps/api/path'
 import { openPath } from '@tauri-apps/plugin-opener'
-import { FolderOpenIcon, InfoIcon, MoonIcon, SunIcon } from '@lucide/vue'
+import { FolderOpenIcon, InfoIcon, MoonIcon, RefreshCwIcon, SunIcon } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Spinner } from '@/components/ui/spinner'
 import ThemeConfig from '../states/ThemeConfig'
+import Updater from '../states/Updater'
 
 const themeConfig = ThemeConfig()
 const appVersion = __APP_VERSION__
+const updater = Updater()
+
+const checkForUpdate = () => {
+  if (updater.downloading.value) return
+  updater.checkForUpdate({ silent: false })
+}
 
 const openDownloadFolder = async () => {
   try {
@@ -40,12 +49,27 @@ const openDownloadFolder = async () => {
     <div class="flex items-center justify-between gap-4 px-4 py-3">
       <div class="flex items-center gap-3">
         <InfoIcon class="size-4 shrink-0 text-muted-foreground" />
-        <div>
+        <div class="min-w-0">
           <p class="text-sm font-medium">版本</p>
           <p class="text-sm text-muted-foreground">V{{ appVersion }}</p>
         </div>
       </div>
-      <span class="text-xs text-muted-foreground">由线上信息检测更新</span>
+      <Button
+        v-if="!updater.downloading.value"
+        variant="outline"
+        size="sm"
+        class="gap-1.5"
+        :disabled="updater.checking.value"
+        @click="checkForUpdate"
+      >
+        <Spinner v-if="updater.checking.value" />
+        <RefreshCwIcon v-else />
+        {{ updater.checking.value ? '检查中…' : '检查更新' }}
+      </Button>
+      <div v-else class="flex w-40 flex-col items-end gap-1">
+        <span class="text-xs text-muted-foreground">正在下载 {{ updater.progress.value }}%</span>
+        <Progress :model-value="updater.progress.value" />
+      </div>
     </div>
 
     <div class="flex items-center justify-between gap-4 px-4 py-3">
