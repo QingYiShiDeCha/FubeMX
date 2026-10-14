@@ -1,7 +1,10 @@
 import { check } from '@tauri-apps/plugin-updater'
 import { relaunch } from '@tauri-apps/plugin-process'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { toast } from 'vue-sonner'
 import DialogState from './Dialog'
+
+const RELEASES_URL = 'https://github.com/QingYiShiDeCha/FubeMX/releases'
 
 const Updater = createGlobalState(() => {
   const dialog = DialogState()
@@ -73,7 +76,15 @@ const Updater = createGlobalState(() => {
       })
     } catch (error) {
       console.error('更新下载失败:', error)
-      toast.error(`更新下载失败：${error}`)
+      dialog.confirm({
+        title: '更新下载失败',
+        description: '可能是网络原因导致下载中断。是否前往 GitHub Releases 页面手动下载安装包？',
+        confirmText: '前往手动下载',
+        cancelText: '取消',
+        onConfirm: () => {
+          openUrl(RELEASES_URL)
+        },
+      })
     } finally {
       downloading.value = false
     }
