@@ -116,18 +116,41 @@ async fn download_file(
     on_event: Channel<DownloadEvent>,
 ) -> Result<(), String> {
     use tokio::io::AsyncWriteExt;
-    let client = reqwest::Client::new();
     let download_id = 1;
 
-    let res = client
-        .get(&url)
+    // 断点续传：已下载内容保存在 <save_path>.part，成功后重命名为正式文件
+    let path = std::path::PathBuf::from(&save_path);
+    let part_path = std::path::PathBuf::from(format!("{}.part", save_path));
+    let mut resume_from: u64 = if part_path.exists() {
+        tokio::fs::metadata(&part_path)
+            .await
+            .map(|m| m.len())
+            .unwrap_or(0)
+    } else {
+        0
+    };
+
+    let client = reqwest::Client::new();
+    let mut request = client.get(&url);
+    if resume_from > 0 {
+        request = request.header("Range", format!("bytes={}-", resume_from));
+    }
+    let res = request
         .send()
         .await
         .map_err(|e| format!("Request error: {}", e))?;
 
-    let total_size = res
+    // 服务器返回 206 表示支持续传，从断点接着写；否则（200 等）从头下载
+    let resuming = resume_from > 0 && res.status() == reqwest::StatusCode::PARTIAL_CONTENT;
+    let append_mode = resuming;
+    if !resuming {
+        resume_from = 0;
+    }
+
+    let remaining = res
         .content_length()
         .ok_or("Failed to get content length".to_string())?;
+    let total_size = resume_from + remaining;
 
     on_event
         .send(DownloadEvent::Started {
@@ -137,14 +160,20 @@ async fn download_file(
         })
         .unwrap();
 
+    let mut file = if append_mode {
+        tokio::fs::OpenOptions::new()
+            .append(true)
+            .open(&part_path)
+            .await
+            .map_err(|e| format!("File open error: {}", e))?
+    } else {
+        tokio::fs::File::create(&part_path)
+            .await
+            .map_err(|e| format!("File create error: {}", e))?
+    };
+
+    let mut downloaded = resume_from;
     let mut stream = res.bytes_stream();
-
-    let path = std::path::PathBuf::from(save_path);
-    let mut file = tokio::fs::File::create(&path)
-        .await
-        .map_err(|e| format!("File create error: {}", e))?;
-
-    let mut downloaded = 0;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| format!("Stream read error: {}", e))?;
@@ -160,6 +189,15 @@ async fn download_file(
             })
             .unwrap();
     }
+    file.flush()
+        .await
+        .map_err(|e| format!("File flush error: {}", e))?;
+    drop(file);
+
+    tokio::fs::rename(&part_path, &path)
+        .await
+        .map_err(|e| format!("Rename error: {}", e))?;
+
     on_event
         .send(DownloadEvent::Finished { download_id })
         .unwrap();

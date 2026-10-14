@@ -44,7 +44,15 @@ const PackageManager = createGlobalState(() => {
       downloadProgress: 0,
       installProgress: 0,
     }
-    await downloadPackage(v)
+    try {
+      await downloadPackage(v)
+    } catch (error) {
+      // 下载中断时 .part 文件保留在下载目录，重新点击安装会断点续传
+      dealing.value = { ...dealing.value!, state: 'error', error: `下载失败：${error}` }
+      toast.error(dealing.value.error ?? '下载失败')
+      clearDealing()
+      return
+    }
     if (dealing.value.state === 'error') {
       toast.error(dealing.value.error ?? '下载失败')
       clearDealing()

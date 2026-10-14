@@ -38,11 +38,18 @@ const SoftwaresManager = createGlobalState(() => {
         toast.success(`软件已下载到 ${downloadPath}`)
       }
     }
-    await invoke('download_file', {
-      url: s.download.windows!,
-      savePath: downloadPath,
-      onEvent: onEvent,
-    })
+    try {
+      await invoke('download_file', {
+        url: s.download.windows!,
+        savePath: downloadPath,
+        onEvent: onEvent,
+      })
+    } catch (error) {
+      // 下载中断时 .part 文件保留在下载目录，重新点击安装会断点续传
+      dealing.value = { ...dealing.value!, state: 'error', error: `下载失败：${error}` }
+      toast.error(dealing.value.error ?? '下载失败')
+      clearDealing()
+    }
   }
 
   function clearDealing() {
