@@ -22,6 +22,12 @@ const router = createRouter({
           meta: { title: '固件包管理' },
         },
         {
+          path: 'timer',
+          name: 'timer',
+          component: () => import('@/components/TimerCalculator.vue'),
+          meta: { title: '定时器计算' },
+        },
+        {
           path: 'settings',
           name: 'settings',
           component: () => import('@/components/SettingsPage.vue'),

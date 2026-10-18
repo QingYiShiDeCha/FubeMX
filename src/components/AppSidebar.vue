@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { AppWindowIcon, BoxesIcon, SettingsIcon } from '@lucide/vue'
+import { AppWindowIcon, BoxesIcon, SettingsIcon, TimerIcon } from '@lucide/vue'
 
 const route = useRoute()
 
 const items = [
   { path: '/softwares', label: '软件安装', icon: AppWindowIcon },
   { path: '/packages', label: '固件包管理', icon: BoxesIcon },
+  { path: '/timer', label: '定时器计算', icon: TimerIcon },
   { path: '/settings', label: '设置', icon: SettingsIcon },
 ]
 </script>
